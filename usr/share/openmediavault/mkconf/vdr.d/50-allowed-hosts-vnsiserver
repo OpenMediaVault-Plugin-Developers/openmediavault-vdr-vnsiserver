@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# Copyright (C) 2016 OpenMediaVault Plugin Developers
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+. /etc/default/openmediavault
+. /usr/share/openmediavault/scripts/helper-functions
+
+OMV_VDR_VNSISERVER_XPATH="/config/services/vdr-vnsiserver"
+OMV_VDR_VNSISERVER_ALLOWED_HOSTS_CONF="/var/lib/vdr/plugins/vnsiserver/allowed_hosts.conf"
+
+allowed_hosts=$(omv_config_get "${OMV_VDR_VNSISERVER_XPATH}/allowed_hosts")
+
+cat <<EOF > ${OMV_VDR_VNSISERVER_ALLOWED_HOSTS_CONF}
+#
+# allowed_hosts.conf  This file describes a number of host addresses that
+#                     are allowed to connect to the streamdev server running
+#                     with the Video Disk Recorder (VDR) on this system.
+# Syntax:
+#
+# IP-Address[/Netmask]
+#
+
+127.0.0.1             # always accept localhost
+#192.168.0.0/24       # any host on the local net
+#204.152.189.113      # a specific host
+#0.0.0.0/0            # any host on any net (USE THIS WITH CARE!)
+
+# Allowed hosts from the OpenMediaVault VDR VNSI plugin.
+${allowed_hosts}
+EOF

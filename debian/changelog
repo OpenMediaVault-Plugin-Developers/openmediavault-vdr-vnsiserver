@@ -1,0 +1,5 @@
+openmediavault-vdr-vnsiserver (3.0.0) stable; urgency=low
+
+  * OMV 3.0 release.
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 28 Jan 2016 16:37:19 +0100

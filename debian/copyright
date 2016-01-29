@@ -1,0 +1,6 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *
+Copyright: Copyright (C) 2016 OpenMediaVault Plugin Developers <plugins@omv-extras.org>
+License: GPL-3+
+ /usr/share/common-licenses/GPL-3

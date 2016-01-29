@@ -1,0 +1,24 @@
+Source: openmediavault-vdr-vnsiserver
+Section: net
+Priority: optional
+Maintainer: OpenMediaVault Plugin Developers <plugins@omv-extras.org>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.6
+XB-Plugin-Section: multimedia
+
+Package: openmediavault-vdr-vnsiserver
+Architecture: all
+Conflicts: vdr-plugin-vnsiserver
+Depends: build-essential,
+         curl,
+         openmediavault (>= 3.0),
+         openmediavault-vdr (>= 3.0.1),
+         pkg-config,
+         vdr-dev,
+         ${misc:Depends}
+Description: VDR VNSI plugin for openmediavault-vdr.
+ Additional plugin for the VDR plugin for OpenMediaVault that adds
+ support for VNSI (a backend to communicate with Kodi).
+ .
+ Note that this plugin builds the VNSI plugin from source and therefore
+ conflicts with vdr-plugin-vnsiserver.

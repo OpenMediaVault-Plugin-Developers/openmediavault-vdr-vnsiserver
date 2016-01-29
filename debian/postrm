@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+. /etc/default/openmediavault
+. /usr/share/openmediavault/scripts/helper-functions
+
+case "$1" in
+    purge)
+        omv_config_delete "/config/services/vdr-vnsiserver"
+
+        if [ -d /var/lib/vdr/plugins/vnsiserver ]; then
+            rm -r /var/lib/vdr/plugins/vnsiserver
+        fi
+    ;;
+
+    remove)
+        # Remove the built VDR plugin files if they exists.
+        if [ -e /usr/lib/vdr/plugins/libvdr-vnsiserver.so.* ]; then
+            rm /usr/lib/vdr/plugins/libvdr-vnsiserver.so.*
+        fi
+
+        find /usr/share/locale/ -type f -name vdr-vnsiserver.mo -exec rm {} +
+    ;;
+
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0
