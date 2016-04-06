@@ -154,7 +154,7 @@ Ext.define('OMV.module.admin.service.vdr.Vnsiserver', {
 });
 
 OMV.WorkspaceManager.registerPanel({
-    id: 'extras',
+    id: 'vnsiserver',
     path: '/service/vdr',
     text: _('VNSI'),
     position: 50,
