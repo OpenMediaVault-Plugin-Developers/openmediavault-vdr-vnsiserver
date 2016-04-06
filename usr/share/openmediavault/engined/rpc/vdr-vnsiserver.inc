@@ -16,35 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once 'openmediavault/config.inc';
-require_once 'openmediavault/error.inc';
-require_once 'openmediavault/notify.inc';
-require_once 'openmediavault/rpcservice.inc';
 
-class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
+namespace OMV\Engined\Rpc;
+
+use OMV\Config\Database;
+use OMV\ExecException;
+use OMV\Engine\Notify\Dispatcher;
+use OMV\Rpc\ServiceAbstract;
+use OMV\System\Process;
+
+class VdrVnsiserver extends ServiceAbstract
 {
-    /**
-     * The main event message path for the VDR plugin.
-     *
-     * @var string
-     */
+    /** @var Database */
+    private $database;
+
+    /** @var string */
+    private $dataModelPath = 'conf.service.vdr-vnsiserver';
+
+    /** @var Dispatcher */
+    private $dispatcher;
+
+    /** @var string */
     private $vdrEventMessagePath = 'org.openmediavault.services.vdr';
 
-    /**
-     * The API URL for fetching the release list for vdr-plugin-vnsiserver.
-     *
-     * @var string
-     */
+    /** @var string */
     private $vnsiserverReleasesUrl = 'https://api.github.com/repos/FernetMenta/vdr-plugin-vnsiserver/releases';
 
-    /**
-     * Get the service configuration XPath.
-     *
-     * @return string
-     */
-    private function getXpath()
+    public function __construct(Database $database = null, Dispatcher $dispatcher = null)
     {
-        return '/config/services/vdr-vnsiserver';
+        $this->database = $database ? $database : Database::getInstance();
+        $this->dispatcher = $dispatcher ? $dispatcher : Dispatcher::getInstance();
     }
 
     /**
@@ -59,6 +60,8 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
 
     /**
      * Initialize the RPC service.
+     *
+     * @return void
      */
     public function initialize()
     {
@@ -73,33 +76,18 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
-     *
-     * @return mixed
-     *
-     * @throws OMVException
+     * @return array
      */
     public function getSettings($params, $context)
     {
-        global $xmlConfig;
-
-        // Validate the RPC caller context.
         $this->validateMethodContext($context, ['role' => OMV_ROLE_ADMINISTRATOR]);
 
-        // Get the configuration object.
-        $object = $xmlConfig->get($this->getXpath());
+        $object = $this->database->get($this->dataModelPath);
 
-        if (is_null($object)) {
-            throw new OMVException(
-                OMVErrorMsg::E_CONFIG_GET_OBJECT_FAILED,
-                $xpath
-            );
-        }
+        $object->add('build_version', 'string');
+        $object->set('build_version', $this->extractVnsiServerVersion());
 
-        $object['build_version'] = $this->extractVnsiServerVersion();
-        $object['enable'] = boolval($object['enable']);
-        $object['allowed_hosts'] = $object['allowed_hosts'];
-
-        return $object;
+        return $object->getAssoc();
     }
 
     /**
@@ -107,47 +95,20 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
-     *
-     * @return mixed
-     *
-     * @throws OMVException
+     * @return array
      */
     public function setSettings($params, $context)
     {
-        global $xmlConfig;
-
-        // Validate the RPC caller context.
         $this->validateMethodContext($context, ['role' => OMV_ROLE_ADMINISTRATOR]);
+        $this->validateMethodParams($params, 'rpc.vdr-vnsiserver.setsettings');
 
-        // Validate the parameters of the RPC service method.
-        $this->validateMethodParams(
-            $params,
-            '{
-                "type": "object",
-                "properties": {
-                    "enable": {
-                        "type": "boolean"
-                    },
-                    "allowed_hosts": {
-                        "type": "string"
-                    }
-                }
-            }'
-        );
+        $object = $this->database->get($this->dataModelPath);
+        $object->setAssoc($params);
 
-        $object = [
-            'enable' => boolval($params['enable']),
-            'allowed_hosts' => $params['allowed_hosts'],
-        ];
+        $this->database->set($object);
+        $this->dispatcher->notify(OMV_NOTIFY_MODIFY, $this->vdrEventMessagePath, $object);
 
-        if ($xmlConfig->replace($this->getXpath(), $object) === false) {
-            throw new OMVException(OMVErrorMsg::E_CONFIG_SET_OBJECT_FAILED);
-        }
-
-        $dispatcher = &OMVNotifyDispatcher::getInstance();
-        $dispatcher->notify(OMV_NOTIFY_MODIFY, $this->vdrEventMessagePath, $object);
-
-        return $object;
+        return $object->getAssoc();
     }
 
     /**
@@ -155,26 +116,11 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
-     *
-     * @throws OMVException
      */
     public function buildPlugin($params, $context)
     {
-        // Validate the RPC caller context.
         $this->validateMethodContext($context, ['role' => OMV_ROLE_ADMINISTRATOR]);
-
-        // Validate the parameters of the RPC service method.
-        $this->validateMethodParams(
-            $params,
-            '{
-                "type": "object",
-                "properties": {
-                    "tarball_url": {
-                        "type": "string"
-                    }
-                }
-            }'
-        );
+        $this->validateMethodParams($params, 'rpc.vdr-vnsiserver.buildplugin');
 
         // Create a background process.
         $bgStatusFilename = $this->createBgProcStatus();
@@ -190,18 +136,10 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
         // Child process.
         try {
             $bgOutputFilename = $this->createBgProcOutput();
+            $this->updateBgProcStatus($bgStatusFilename, 'outputfilename', $bgOutputFilename);
 
-            $this->updateBgProcStatus(
-                $bgStatusFilename,
-                'outputfilename',
-                $bgOutputFilename
-            );
-
-            $cmd = sprintf('export LANG=C; omv-vdr-build-vnsi \'%s\'', $params['tarball_url']);
-
-            if ($this->exec($cmd, $output, $bgOutputFilename) !== 0) {
-                throw new OMVException(OMVErrorMsg::E_EXEC_FAILED, $cmd, implode(PHP_EOL, $output));
-            }
+            $cmd = new Process('omv-vdr-build-vnsi', escapeshellarg($params['tarball_url']));
+            $cmd->execute($output);
 
             $this->finalizeBgProcStatus($bgStatusFilename, $output);
             exit(0);
@@ -216,10 +154,10 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
+     * @return array
      */
     public function enumerateAvailablePluginReleases($params, $context)
     {
-        // Validate the RPC caller context.
         $this->validateMethodContext($context, ['role' => OMV_ROLE_ADMINISTRATOR]);
 
         // Github requires an user-agent:
@@ -244,7 +182,11 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
         $version = 'n/a';
         $versionRegex = '/^vnsiserver \(([\d\.]+)\)/';
 
-        if ($this->exec('vdr -V', $output) === -1) {
+        $cmd = new Process('vdr', '-V');
+
+        try {
+            $cmd->execute($output);
+        } catch (ExecException $e) {
             return $version;
         }
 
@@ -262,7 +204,3 @@ class OMVRpcServiceVdrVnsiserver extends OMVRpcServiceAbstract
         return $version;
     }
 }
-
-// Register the RPC service.
-$rpcServiceMgr = &OMVRpcServiceMgr::getInstance();
-$rpcServiceMgr->registerService(new OMVRpcServiceVdrVnsiserver());

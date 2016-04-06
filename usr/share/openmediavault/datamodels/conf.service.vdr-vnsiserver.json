@@ -1,0 +1,19 @@
+{
+    "type": "config",
+    "id": "conf.service.vdr-vnsiserver",
+    "title": "VNSI",
+    "queryinfo": {
+        "xpath": "/config/services/vdr-vnsiserver",
+        "iterable": false
+    },
+    "properties": {
+        "enable": {
+            "type": "boolean",
+            "default": false
+        },
+        "allowed_hosts": {
+            "type": "string",
+            "default": ""
+        }
+    }
+}

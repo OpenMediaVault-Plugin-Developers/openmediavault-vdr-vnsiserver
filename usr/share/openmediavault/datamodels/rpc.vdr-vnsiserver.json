@@ -1,0 +1,29 @@
+[{
+    "type": "rpc",
+    "id": "rpc.vdr-vnsiserver.setsettings",
+    "params": {
+        "type": "object",
+        "properties": {
+            "enable": {
+                "type": "boolean",
+                "required": true
+            },
+            "allowed_hosts": {
+                "type": "string",
+                "required": true
+            }
+        }
+    }
+}, {
+    "type": "rpc",
+    "id": "rpc.vdr-vnsiserver.buildplugin",
+    "params": {
+        "type": "object",
+        "properties": {
+            "tarball_url": {
+                "type": "string",
+                "required": true
+            }
+        }
+    }
+}]
