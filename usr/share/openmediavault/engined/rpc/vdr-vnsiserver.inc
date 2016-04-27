@@ -20,8 +20,8 @@
 namespace OMV\Engined\Rpc;
 
 use OMV\Config\Database;
-use OMV\ExecException;
 use OMV\Engine\Notify\Dispatcher;
+use OMV\ExecException;
 use OMV\Rpc\ServiceAbstract;
 use OMV\System\Process;
 
@@ -76,6 +76,7 @@ class VdrVnsiserver extends ServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
+     *
      * @return array
      */
     public function getSettings($params, $context)
@@ -95,6 +96,7 @@ class VdrVnsiserver extends ServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
+     *
      * @return array
      */
     public function setSettings($params, $context)
@@ -154,6 +156,7 @@ class VdrVnsiserver extends ServiceAbstract
      *
      * @param array $params  The method parameters.
      * @param array $context The context of the caller.
+     *
      * @return array
      */
     public function enumerateAvailablePluginReleases($params, $context)
