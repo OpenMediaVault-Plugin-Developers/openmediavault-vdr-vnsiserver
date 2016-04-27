@@ -37,7 +37,7 @@ class VdrVnsiserver extends ServiceAbstract
     private $dispatcher;
 
     /** @var string */
-    private $vdrEventMessagePath = 'org.openmediavault.services.vdr';
+    private $vdrEventMessagePath = 'org.openmediavault.conf.service.vdr';
 
     /** @var string */
     private $vnsiserverReleasesUrl = 'https://api.github.com/repos/FernetMenta/vdr-plugin-vnsiserver/releases';
