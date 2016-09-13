@@ -129,6 +129,8 @@ class VdrVnsiserver extends ServiceAbstract
         // Create a background process.
         return $this->execBgProc(function ($bgStatusFilename, $bgOutputFilename) use ($tarballUrl) {
             $cmd = new Process('omv-vdr-build-vnsi', escapeshellarg($tarballUrl));
+            $cmd->setRedirect1toFile($bgOutputFilename);
+            $cmd->setRedirect2toFile($bgOutputFilename);
             $cmd->execute($output);
 
             return $output;
