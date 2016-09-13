@@ -124,31 +124,15 @@ class VdrVnsiserver extends ServiceAbstract
         $this->validateMethodContext($context, ['role' => OMV_ROLE_ADMINISTRATOR]);
         $this->validateMethodParams($params, 'rpc.vdr-vnsiserver.buildplugin');
 
+        $tarballUrl = $params['tarball_url'];
+
         // Create a background process.
-        $bgStatusFilename = $this->createBgProcStatus();
-        $pid = $this->fork();
-
-        // Parent process.
-        if ($pid > 0) {
-            $this->initializeBgProcStatus($bgStatusFilename, $pid);
-
-            return $bgStatusFilename;
-        }
-
-        // Child process.
-        try {
-            $bgOutputFilename = $this->createBgProcOutput();
-            $this->updateBgProcStatus($bgStatusFilename, 'outputfilename', $bgOutputFilename);
-
-            $cmd = new Process('omv-vdr-build-vnsi', escapeshellarg($params['tarball_url']));
+        return $this->execBgProc(function ($bgStatusFilename, $bgOutputFilename) use ($tarballUrl) {
+            $cmd = new Process('omv-vdr-build-vnsi', escapeshellarg($tarballUrl));
             $cmd->execute($output);
 
-            $this->finalizeBgProcStatus($bgStatusFilename, $output);
-            exit(0);
-        } catch (Exception $e) {
-            $this->finalizeBgProcStatus($bgStatusFilename, '', $e);
-            exit(1);
-        }
+            return $output;
+        });
     }
 
     /**
