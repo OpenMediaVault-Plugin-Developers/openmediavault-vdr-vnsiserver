@@ -11,7 +11,7 @@ Architecture: all
 Conflicts: vdr-plugin-vnsiserver
 Depends: build-essential,
          curl,
-         openmediavault (>= 3.0.35),
+         openmediavault (>= 3.0.40),
          openmediavault-vdr (>= 3.0.3),
          pkg-config,
          vdr-dev,
